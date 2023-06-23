@@ -1,26 +1,21 @@
 {
-  "name": "b712-summer-camp-client-side-mehedihasan95",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "b7a12-summer-camp-server_side-mehedihasan95",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/programming-hero-web-course1/b7a12-summer-camp-server_side-MehediHasan95.git"
   },
-  "devDependencies": {
-    "@types/react": "^18.0.37",
-    "@types/react-dom": "^18.0.11",
-    "@vitejs/plugin-react": "^4.0.0",
-    "eslint": "^8.38.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.3.4",
-    "vite": "^4.3.9"
-  }
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/programming-hero-web-course1/b7a12-summer-camp-server_side-MehediHasan95/issues"
+  },
+  "homepage": "https://github.com/programming-hero-web-course1/b7a12-summer-camp-server_side-MehediHasan95#readme"
 }
