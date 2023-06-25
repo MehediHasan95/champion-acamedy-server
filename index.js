@@ -28,7 +28,15 @@ async function run() {
     await client.connect();
     await client.db("admin").command({ ping: 1 });
     console.log("You successfully connected to MongoDB!");
-    const championDB = client.db("championAcademyBD");
+    const championDB = client.db("championAcademyDB");
+    const userCollection = championDB.collection("users");
+
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      console.log(users);
+      const result = await userCollection.insertOne(users);
+      res.send(result);
+    });
   } finally {
     app.listen(port, () =>
       console.log("Champion Academy server is running successfully")
