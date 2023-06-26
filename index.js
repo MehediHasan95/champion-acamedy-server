@@ -40,6 +40,23 @@ async function run() {
     const userCollection = championDB.collection("users");
     // ----
 
+    // middleware
+    const verifyRole = async (req, res, next) => {
+      const matched = await userCollection.findOne({
+        uid: { $eq: req.query.uid },
+      });
+      if (matched.role === ("admin" || "instructor")) {
+        next();
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
+    };
+
+    // ---
+    app.get("/role-check", verifyRole, async (req, res) => {
+      console.log(req.query);
+    });
+
     app.get("/users", async (req, res) => {
       const results = await userCollection.find().toArray();
       res.send(results);
@@ -70,7 +87,6 @@ async function run() {
     app.delete("/users", (req, res) => {
       const { id, uid } = req.query;
       const query = { _id: new ObjectId(id) };
-
       admin
         .auth()
         .deleteUser(uid)
