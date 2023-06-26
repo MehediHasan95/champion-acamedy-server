@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceAccountKey.json");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -19,6 +21,10 @@ const client = new MongoClient(
     },
   }
 );
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 async function run() {
   try {
@@ -59,6 +65,22 @@ async function run() {
       };
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
+    });
+
+    app.delete("/users", (req, res) => {
+      const { id, uid } = req.query;
+      const query = { _id: new ObjectId(id) };
+
+      admin
+        .auth()
+        .deleteUser(uid)
+        .then(async () => {
+          const result = await userCollection.deleteOne(query);
+          res.send(result);
+        })
+        .catch((e) => {
+          res.send({ message: e.message });
+        });
     });
   } finally {
     app.listen(port, () =>
