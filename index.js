@@ -4,6 +4,7 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -22,9 +23,26 @@ const client = new MongoClient(
   }
 );
 
+// Firebase config
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
+// middleware JWT
+const verifyJWT = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (token) {
+    jwt.verify(token, process.env.PRIVATE_KEY, (err, decoded) => {
+      if (err) {
+        res.status(401).send({ message: "unauthorized" });
+      }
+      req.decoded = decoded;
+      next();
+    });
+  } else {
+    res.status(401).send({ message: "unauthorized" });
+  }
+};
 
 async function run() {
   try {
@@ -45,7 +63,7 @@ async function run() {
       const matched = await userCollection.findOne({
         uid: { $eq: req.query.uid },
       });
-      if (matched.role === ("admin" || "instructor")) {
+      if (matched?.role === ("admin" || "instructor")) {
         next();
       } else {
         res.status(403).send({ message: "forbidden" });
@@ -53,8 +71,20 @@ async function run() {
     };
 
     // ---
-    app.get("/role-check", verifyRole, async (req, res) => {
-      console.log(req.query);
+    app.post("/jwt", (req, res) => {
+      const data = req.body;
+      const token = jwt.sign(data, process.env.PRIVATE_KEY, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
+
+    app.get("/role-check", verifyRole, verifyJWT, async (req, res) => {
+      if (req.decoded.uid === req.query.uid) {
+        res.send({ message: "success" });
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
     });
 
     app.get("/users", async (req, res) => {
