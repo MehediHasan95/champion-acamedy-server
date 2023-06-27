@@ -57,6 +57,7 @@ async function run() {
     // ----
     const championDB = client.db("championAcademyDB");
     const userCollection = championDB.collection("users");
+    const classCollection = championDB.collection("classes");
     // ----
 
     // middleware
@@ -64,7 +65,7 @@ async function run() {
       const matched = await userCollection.findOne({
         uid: { $eq: req.query.uid },
       });
-      if (matched?.role === ("admin" || "instructor")) {
+      if (matched?.role === "admin" || matched?.role === "instructor") {
         req.query.role = matched?.role;
         next();
       } else {
@@ -89,9 +90,13 @@ async function run() {
       }
     });
 
+    //  ADMIN ROUTE
     app.get("/users", verifyJWT, verifyRole, async (req, res) => {
       if (req.decoded.uid === req.query.uid) {
-        const results = await userCollection.find().toArray();
+        const results = await userCollection
+          .find()
+          .sort({ create: 1 })
+          .toArray();
         res.send(results);
       } else {
         res.status(403).send({ message: "forbidden" });
@@ -138,6 +143,17 @@ async function run() {
           .catch((e) => {
             res.send({ message: e.message });
           });
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
+    });
+
+    // INSTRUCTOR ROUTE
+    app.post("/add-class", verifyJWT, verifyRole, async (req, res) => {
+      const data = req.body;
+      if (req.decoded.uid === req.query.uid) {
+        const result = await classCollection.insertOne(data);
+        res.send(result);
       } else {
         res.status(403).send({ message: "forbidden" });
       }
