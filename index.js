@@ -158,6 +158,16 @@ async function run() {
         res.status(403).send({ message: "forbidden" });
       }
     });
+    //---------------------
+
+    // FOR ALL USERS ROUTE
+    app.get("/all-classes", async (req, res) => {
+      const results = await classCollection
+        .find()
+        .sort({ create: 1 })
+        .toArray();
+      res.send(results);
+    });
   } finally {
     app.listen(port, () =>
       console.log("Champion Academy server is running successfully")
