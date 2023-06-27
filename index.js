@@ -30,14 +30,15 @@ admin.initializeApp({
 
 // middleware JWT
 const verifyJWT = (req, res, next) => {
-  const token = req.headers.authorization;
+  const token = req?.headers?.authorization;
   if (token) {
     jwt.verify(token, process.env.PRIVATE_KEY, (err, decoded) => {
       if (err) {
         res.status(401).send({ message: "unauthorized" });
+      } else {
+        req.decoded = decoded;
+        next();
       }
-      req.decoded = decoded;
-      next();
     });
   } else {
     res.status(401).send({ message: "unauthorized" });
@@ -64,9 +65,10 @@ async function run() {
         uid: { $eq: req.query.uid },
       });
       if (matched?.role === ("admin" || "instructor")) {
+        req.query.role = matched?.role;
         next();
       } else {
-        res.status(403).send({ message: "forbidden" });
+        res.send({ role: matched?.role });
       }
     };
 
@@ -79,17 +81,21 @@ async function run() {
       res.send({ token });
     });
 
-    app.get("/role-check", verifyRole, verifyJWT, async (req, res) => {
+    app.get("/role-check", verifyJWT, verifyRole, async (req, res) => {
       if (req.decoded.uid === req.query.uid) {
-        res.send({ message: "success" });
+        res.send({ role: req.query.role });
       } else {
         res.status(403).send({ message: "forbidden" });
       }
     });
 
-    app.get("/users", async (req, res) => {
-      const results = await userCollection.find().toArray();
-      res.send(results);
+    app.get("/users", verifyJWT, verifyRole, async (req, res) => {
+      if (req.decoded.uid === req.query.uid) {
+        const results = await userCollection.find().toArray();
+        res.send(results);
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
     });
 
     app.post("/users", async (req, res) => {
@@ -101,32 +107,40 @@ async function run() {
       }
     });
 
-    app.patch("/users/:id", async (req, res) => {
+    app.patch("/users/:id", verifyJWT, verifyRole, async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          role: data.role,
-        },
-      };
-      const result = await userCollection.updateOne(filter, updateDoc);
-      res.send(result);
+      if (req.decoded.uid === req.query.uid) {
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            role: data.role,
+          },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
     });
 
-    app.delete("/users", (req, res) => {
-      const { id, uid } = req.query;
+    app.delete("/users", verifyJWT, verifyRole, (req, res) => {
+      const { uid, id, did } = req.query;
       const query = { _id: new ObjectId(id) };
-      admin
-        .auth()
-        .deleteUser(uid)
-        .then(async () => {
-          const result = await userCollection.deleteOne(query);
-          res.send(result);
-        })
-        .catch((e) => {
-          res.send({ message: e.message });
-        });
+      if (req.decoded.uid === uid) {
+        admin
+          .auth()
+          .deleteUser(did)
+          .then(async () => {
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+          })
+          .catch((e) => {
+            res.send({ message: e.message });
+          });
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
     });
   } finally {
     app.listen(port, () =>
