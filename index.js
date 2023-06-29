@@ -103,6 +103,14 @@ async function run() {
       }
     });
 
+    app.get("/manage-classes", verifyJWT, verifyRole, async (req, res) => {
+      const results = await classCollection
+        .find()
+        .sort({ create: 1 })
+        .toArray();
+      res.send(results);
+    });
+
     app.post("/users", async (req, res) => {
       const users = req.body;
       const isExist = await userCollection.findOne({ uid: { $eq: users.uid } });
@@ -149,7 +157,6 @@ async function run() {
     });
 
     // INSTRUCTOR ROUTE
-
     app.get("/myclasses", verifyJWT, verifyRole, async (req, res) => {
       if (req.decoded.uid === req.query.uid) {
         const results = await classCollection
