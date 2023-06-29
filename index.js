@@ -149,6 +149,16 @@ async function run() {
     });
 
     // INSTRUCTOR ROUTE
+
+    app.get("/myclasses", verifyJWT, verifyRole, async (req, res) => {
+      if (req.decoded.uid === req.query.uid) {
+        const results = await classCollection
+          .find({ uid: { $eq: req.query.uid } })
+          .toArray();
+        res.send(results);
+      }
+    });
+
     app.post("/add-class", verifyJWT, verifyRole, async (req, res) => {
       const data = req.body;
       if (req.decoded.uid === req.query.uid) {
