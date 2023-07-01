@@ -111,6 +111,26 @@ async function run() {
       res.send(results);
     });
 
+    app.patch("/manage-classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: data.feedback,
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.delete("/manage-classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const users = req.body;
       const isExist = await userCollection.findOne({ uid: { $eq: users.uid } });
