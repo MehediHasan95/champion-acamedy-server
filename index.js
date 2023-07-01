@@ -123,10 +123,18 @@ async function run() {
       const data = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
-        $set: {
-          status: data.status,
-          feedback: data.feedback,
-        },
+        $set:
+          Object.keys(data).length === 2
+            ? {
+                status: data.status,
+                feedback: data.feedback,
+              }
+            : {
+                courseName: data.courseName,
+                price: data.price,
+                seats: data.seats,
+                image: data.image,
+              },
       };
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
