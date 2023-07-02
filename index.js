@@ -219,6 +219,14 @@ async function run() {
       res.send(results);
     });
 
+    app.get("/add-to-cart", verifyJWT, async (req, res) => {
+      console.log(req.query);
+      const results = await cartsCollection
+        .find({ uid: { $eq: req.query.uid } })
+        .toArray();
+      res.send(results);
+    });
+
     app.post("/add-to-cart", verifyJWT, async (req, res) => {
       const data = req.body;
       const isExist = await cartsCollection.findOne({
