@@ -58,6 +58,7 @@ async function run() {
     const championDB = client.db("championAcademyDB");
     const userCollection = championDB.collection("users");
     const classCollection = championDB.collection("classes");
+    const cartsCollection = championDB.collection("carts");
     // ----
 
     // middleware
@@ -82,12 +83,8 @@ async function run() {
       res.send({ token });
     });
 
-    app.get("/role-check", verifyJWT, verifyRole, async (req, res) => {
-      if (req.decoded.uid === req.query.uid) {
-        res.send({ role: req.query.role });
-      } else {
-        res.status(403).send({ message: "forbidden" });
-      }
+    app.get("/role-check", verifyRole, async (req, res) => {
+      res.send({ role: req.query.role });
     });
 
     //  ADMIN ROUTE
@@ -124,16 +121,16 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set:
-          Object.keys(data).length === 2
+          Object.keys(data).length >= 4
             ? {
-                status: data.status,
-                feedback: data.feedback,
-              }
-            : {
                 courseName: data.courseName,
                 price: data.price,
                 seats: data.seats,
                 image: data.image,
+              }
+            : {
+                status: data.status,
+                feedback: data.feedback,
               },
       };
       const result = await classCollection.updateOne(filter, updateDoc);
@@ -221,6 +218,21 @@ async function run() {
         .toArray();
       res.send(results);
     });
+
+    app.post("/add-to-cart", verifyJWT, async (req, res) => {
+      const data = req.body;
+      const isExist = await cartsCollection.findOne({
+        classId: { $eq: req.body.classId },
+      });
+      if (!isExist) {
+        const result = await cartsCollection.insertOne(data);
+        res.send(result);
+      } else {
+        res.send({ exist: true });
+      }
+    });
+
+    // ----------------------
   } finally {
     app.listen(port, () =>
       console.log("Champion Academy server is running successfully")
