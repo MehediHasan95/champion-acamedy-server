@@ -220,7 +220,6 @@ async function run() {
     });
 
     app.get("/add-to-cart", verifyJWT, async (req, res) => {
-      console.log(req.query);
       const results = await cartsCollection
         .find({ uid: { $eq: req.query.uid } })
         .toArray();
@@ -238,6 +237,13 @@ async function run() {
       } else {
         res.send({ exist: true });
       }
+    });
+
+    app.delete("/add-to-cart/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result);
     });
 
     // ----------------------
