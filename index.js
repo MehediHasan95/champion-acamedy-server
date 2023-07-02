@@ -5,6 +5,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(`${process.env.PAY_SECRET_KEY}`);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -244,6 +245,18 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
+    });
+
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { total } = req.body;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: parseFloat((total * 100).toFixed(2)),
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
     // ----------------------
