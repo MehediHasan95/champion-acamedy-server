@@ -259,6 +259,21 @@ async function run() {
       });
     });
 
+    app.post("/payment", verifyJWT, async (req, res) => {
+      const data = req.body;
+      await classCollection.updateMany(
+        {
+          _id: { $in: data.classId.map((id) => new ObjectId(id)) },
+          seats: { $gt: 0 },
+        },
+        { $inc: { seats: -1 } }
+      );
+      const results = await cartsCollection.deleteMany({
+        uid: { $eq: data.uid },
+      });
+      res.send(results);
+    });
+
     // ----------------------
   } finally {
     app.listen(port, () =>
