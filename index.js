@@ -60,6 +60,7 @@ async function run() {
     const userCollection = championDB.collection("users");
     const classCollection = championDB.collection("classes");
     const cartsCollection = championDB.collection("carts");
+    const purchaseCollection = championDB.collection("purchase");
     // ----
 
     // middleware
@@ -266,11 +267,12 @@ async function run() {
           _id: { $in: data.classId.map((id) => new ObjectId(id)) },
           seats: { $gt: 0 },
         },
-        { $inc: { seats: -1 } }
+        { $inc: { seats: -1, enroll: 1 } }
       );
       const results = await cartsCollection.deleteMany({
         uid: { $eq: data.uid },
       });
+      await purchaseCollection.insertOne(data);
       res.send(results);
     });
 
