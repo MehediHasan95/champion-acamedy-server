@@ -192,6 +192,17 @@ async function run() {
     });
 
     // INSTRUCTOR ROUTE
+    app.get("/all-instructor", async (req, res) => {
+      const results = await userCollection
+        .aggregate([
+          {
+            $match: { role: "instructor" },
+          },
+        ])
+        .toArray();
+      res.send(results);
+    });
+
     app.get("/myclasses", verifyJWT, verifyRole, async (req, res) => {
       if (req.decoded.uid === req.query.uid) {
         const results = await classCollection
@@ -215,7 +226,7 @@ async function run() {
     // FOR ALL USERS ROUTE
     app.get("/all-classes", async (req, res) => {
       const results = await classCollection
-        .find()
+        .find({ status: { $eq: "approve" } })
         .sort({ enroll: -1 })
         .toArray();
       res.send(results);
@@ -246,28 +257,6 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
-    });
-
-    app.get("/popular-instructor", async (req, res) => {
-      const results = await classCollection
-        .aggregate([
-          {
-            $group: {
-              _id: "$uid",
-              instructorName: { $first: "$instructorName" },
-              instructorImage: { $first: "$instructorImage" },
-              totalEnroll: { $sum: "$enroll" },
-            },
-          },
-          {
-            $sort: { totalEnroll: -1 },
-          },
-          {
-            $limit: 6,
-          },
-        ])
-        .toArray();
-      res.send(results);
     });
 
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
