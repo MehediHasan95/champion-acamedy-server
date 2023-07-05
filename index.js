@@ -80,7 +80,7 @@ async function run() {
     app.post("/jwt", (req, res) => {
       const data = req.body;
       const token = jwt.sign(data, process.env.PRIVATE_KEY, {
-        expiresIn: "1h",
+        expiresIn: "1d",
       });
       res.send({ token });
     });
@@ -216,7 +216,7 @@ async function run() {
     app.get("/all-classes", async (req, res) => {
       const results = await classCollection
         .find()
-        .sort({ create: 1 })
+        .sort({ enroll: -1 })
         .toArray();
       res.send(results);
     });
@@ -264,19 +264,28 @@ async function run() {
       const data = req.body;
       await classCollection.updateMany(
         {
-          _id: { $in: data.classId.map((id) => new ObjectId(id)) },
+          _id: { $in: data?.carts?.map((e) => new ObjectId(e.classId)) },
           seats: { $gt: 0 },
         },
         { $inc: { seats: -1, enroll: 1 } }
       );
+
       const results = await cartsCollection.deleteMany({
         uid: { $eq: data.uid },
       });
+
       await purchaseCollection.insertOne(data);
       res.send(results);
     });
 
-    // ----------------------
+    app.get("/payment-history/:id", verifyJWT, async (req, res) => {
+      const results = await purchaseCollection
+        .find({ uid: { $eq: req.params.id } })
+        .sort({ create: -1 })
+        .toArray();
+      res.send(results);
+    });
+    // -----------------------------------------------------------
   } finally {
     app.listen(port, () =>
       console.log("Champion Academy server is running successfully")
