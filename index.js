@@ -248,6 +248,28 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/popular-instructor", async (req, res) => {
+      const results = await classCollection
+        .aggregate([
+          {
+            $group: {
+              _id: "$uid",
+              instructorName: { $first: "$instructorName" },
+              instructorImage: { $first: "$instructorImage" },
+              totalEnroll: { $sum: "$enroll" },
+            },
+          },
+          {
+            $sort: { totalEnroll: -1 },
+          },
+          {
+            $limit: 6,
+          },
+        ])
+        .toArray();
+      res.send(results);
+    });
+
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { total } = req.body;
       const paymentIntent = await stripe.paymentIntents.create({
@@ -285,6 +307,7 @@ async function run() {
         .toArray();
       res.send(results);
     });
+
     // -----------------------------------------------------------
   } finally {
     app.listen(port, () =>
