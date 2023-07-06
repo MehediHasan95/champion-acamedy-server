@@ -172,6 +172,17 @@ async function run() {
       }
     });
 
+    app.patch("/profile/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: data,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     app.delete("/users", verifyJWT, verifyRole, (req, res) => {
       const { uid, id, did } = req.query;
       const query = { _id: new ObjectId(id) };
@@ -224,6 +235,18 @@ async function run() {
     //---------------------
 
     // FOR ALL USERS ROUTE
+
+    app.get("/profile", verifyJWT, async (req, res) => {
+      if (req.decoded.uid === req.query.uid) {
+        const result = await userCollection.findOne({
+          uid: { $eq: req.query.uid },
+        });
+        res.send(result);
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
+    });
+
     app.get("/all-classes", async (req, res) => {
       const results = await classCollection
         .find({ status: { $eq: "approve" } })
