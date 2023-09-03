@@ -61,6 +61,7 @@ async function run() {
     const classCollection = championDB.collection("classes");
     const cartsCollection = championDB.collection("carts");
     const purchaseCollection = championDB.collection("purchase");
+    const contactCollection = championDB.collection("contacts");
     // ----
 
     // middleware
@@ -152,6 +153,8 @@ async function run() {
       if (!isExist) {
         const result = await userCollection.insertOne(users);
         res.send(result);
+      } else {
+        res.send({ exist: true });
       }
     });
 
@@ -317,6 +320,24 @@ async function run() {
         .find({ uid: { $eq: req.params.id } })
         .sort({ create: -1 })
         .toArray();
+      res.send(results);
+    });
+
+    app.get("/contacts", verifyJWT, verifyRole, async (req, res) => {
+      const results = await contactCollection.find().toArray();
+      res.send(results);
+    });
+
+    app.post("/contacts", async (req, res) => {
+      const data = req.body;
+      const result = await contactCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.delete("/contact/:id", verifyJWT, verifyRole, async (req, res) => {
+      const results = await contactCollection.deleteOne({
+        _id: new ObjectId(req.params.id),
+      });
       res.send(results);
     });
 
